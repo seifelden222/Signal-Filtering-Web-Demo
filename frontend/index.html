@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Voice DSP – Upload & Process</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+      crossorigin="anonymous" />
+  </head>
+  <body>
+    <h2 class="text-center">Voice DSP – Before / Middle / After</h2>
+
+    <div class="container">
+      <div class="row">
+        <div class="col-md-10">
+          <h2 id="upload_audio_err" class="alert alert-danger d-none">
+            please inter a voice with .wav
+          </h2>
+          <form action="" onsubmit="processTest(event);" id="upload-form">
+            <label class="text-center">upload-audio: </label>
+            <input
+              type="file"
+              id="upload-audio"
+              accept="audio/*"
+              class="form-control my-4" />
+            <input type="submit" class="form-control btn btn-info" />
+          </form>
+          <div class="d-flex justify-content-center">
+            <p class="text-center me-4">
+              if you donot know the resulut click her and will give you example
+            </p>
+            <button id="example-button" class="btn btn-primary mb-4">
+              Examble
+            </button>
+          </div>
+          <div id="status" class="text-center fw-normal">Status: idle</div>
+
+          <div class="d-block text-center my-4">
+            <div class="label">Before (original waveform)</div>
+            <img
+          
+              id="wave-before"
+              width="800"
+              height="100"
+              class="img-fluid"></img>
+          </div>
+
+          <div class="d-block text-center my-4">
+            <div class="label">Middle (quantized waveform)</div>
+            <img
+              id="wave-middle"
+              width="800"
+              height="100"
+              class="img-fluid"></img>
+          </div>
+
+          <div class="d-block text-center my-4">
+            <div class="label">After (filtered waveform)</div>
+            <img
+              id="wave-after"
+              width="800"
+              height="100"
+              class="img-fluid"></img>
+          </div>
+        </div>
+      </div>
+    </div>
+
+<script>
+  // backend base URL (خلي البورت نفس اللي مشغّل عليه uvicorn)
+  const backendBase = "http://127.0.0.1:8001";
+
+  var UploadAudio = document.getElementById("upload-audio");
+  var UploadForm = document.getElementById("upload-form");
+  var UploadAudioErr = document.getElementById("upload_audio_err");
+
+  async function processTest(e) {
+    e.preventDefault();
+
+    if (!UploadAudio.files || UploadAudio.files.length === 0) {
+      UploadAudioErr.classList.remove("d-none");
+      return false;
+    }
+
+    const allowedExt = ["wav", "ogg", "mp3", "flac", "m4a", "aac", "opus"];
+    const ext = UploadAudio.files[0].name.split(".").pop().toLowerCase();
+    if (!allowedExt.includes(ext)) {
+      UploadAudioErr.innerHTML =
+        "please upload an audio file (wav/ogg/mp3/...)";
+      UploadAudioErr.classList.remove("d-none");
+      return false;
+    }
+
+    try {
+      UploadAudioErr.classList.add("d-none");
+      document.getElementById("status").innerText =
+        "Status: uploading & processing...";
+
+      const formData = new FormData();
+      formData.append("file", UploadAudio.files[0]); // اسم الحقل في الـ backend = file
+
+      const res = await fetch(backendBase + "/process-audio/", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        let txt = await res.text().catch(() => "");
+        console.error("Server error", res.status, txt);
+        document.getElementById(
+          "status"
+        ).innerText = `Status: Server error ${res.status}`;
+        return;
+      }
+
+      const result = await res.json();
+      console.log(result);
+
+      document.getElementById("status").innerText =
+        "Status: File processed.";
+
+      // نرسم الصور في العناصر <img> — نستخدم رابط كامل (backendBase + path)
+      if (result.original_plot) {
+        const url = backendBase + result.original_plot;
+        drawImageToCanvas(url, "wave-before");
+      } else {
+        console.warn('original_plot missing in response', result);
+      }
+      if (result.noisy_plot) {
+        const url = backendBase + result.noisy_plot;
+        drawImageToCanvas(url, "wave-middle");
+      }
+      if (result.filtered_plot) {
+        const url = backendBase + result.filtered_plot;
+        drawImageToCanvas(url, "wave-after");
+      }
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      document.getElementById("status").innerText =
+        "Status: Error uploading file.";
+    }
+  }
+
+  // زرار الـ Example يستدعي /process-default
+  document.getElementById("example-button").addEventListener("click", async function () {
+    try {
+      document.getElementById("status").innerText =
+        "Status: processing default example...";
+      const res = await fetch(backendBase + "/process-default");
+      if (!res.ok) {
+        document.getElementById("status").innerText = `Status: Example failed ${res.status}`;
+        return;
+      }
+      const result = await res.json();
+
+      // backend returns keys: original_plot, noisy_plot, filtered_plot
+      if (result.original_plot) document.getElementById("wave-before").src = backendBase + result.original_plot;
+      if (result.noisy_plot) document.getElementById("wave-middle").src = backendBase + result.noisy_plot;
+      if (result.filtered_plot) document.getElementById("wave-after").src = backendBase + result.filtered_plot;
+
+      document.getElementById("status").innerText = "Status: Example processed.";
+    } catch (e) {
+      console.error(e);
+      document.getElementById("status").innerText = "Status: error in example.";
+    }
+  });
+
+function images(){
+
+}
+
+
+
+
+
+  // helper: set image src from full URL
+  function drawImageToCanvas(url, imgId) {
+    if (!url) return;
+    const el = document.getElementById(imgId);
+    if (!el) return;
+    // set src to full http(s) url
+    el.src = url;
+  }
+</script>
+
+  </body>
+</html>

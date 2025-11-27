@@ -124,17 +124,17 @@
       // نرسم الصور في العناصر <img> — نستخدم رابط كامل (backendBase + path)
       if (result.original_plot) {
         const url = backendBase + result.original_plot;
-        drawImageToCanvas(url, "wave-before");
+        drawImage(url, "wave-before");
       } else {
         console.warn('original_plot missing in response', result);
       }
       if (result.noisy_plot) {
         const url = backendBase + result.noisy_plot;
-        drawImageToCanvas(url, "wave-middle");
+        drawImage(url, "wave-middle");
       }
       if (result.filtered_plot) {
         const url = backendBase + result.filtered_plot;
-        drawImageToCanvas(url, "wave-after");
+        drawImage(url, "wave-after");
       }
     } catch (error) {
       console.error("Error uploading file:", error);
@@ -167,16 +167,9 @@
     }
   });
 
-function images(){
-
-}
-
-
-
-
 
   // helper: set image src from full URL
-  function drawImageToCanvas(url, imgId) {
+  function drawImage(url, imgId) {
     if (!url) return;
     const el = document.getElementById(imgId);
     if (!el) return;

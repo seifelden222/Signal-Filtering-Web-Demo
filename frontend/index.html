@@ -121,20 +121,17 @@
       document.getElementById("status").innerText =
         "Status: File processed.";
 
-      // نرسم الصور في العناصر <img> — نستخدم رابط كامل (backendBase + path)
+      // نرسم الصور في العناصر <img> — backend may return data-URLs or full URLs.
       if (result.original_plot) {
-        const url = backendBase + result.original_plot;
-        drawImage(url, "wave-before");
+        drawImage(result.original_plot, "wave-before");
       } else {
         console.warn('original_plot missing in response', result);
       }
       if (result.noisy_plot) {
-        const url = backendBase + result.noisy_plot;
-        drawImage(url, "wave-middle");
+        drawImage(result.noisy_plot, "wave-middle");
       }
       if (result.filtered_plot) {
-        const url = backendBase + result.filtered_plot;
-        drawImage(url, "wave-after");
+        drawImage(result.filtered_plot, "wave-after");
       }
     } catch (error) {
       console.error("Error uploading file:", error);
@@ -156,9 +153,9 @@
       const result = await res.json();
 
       // backend returns keys: original_plot, noisy_plot, filtered_plot
-      if (result.original_plot) document.getElementById("wave-before").src = backendBase + result.original_plot;
-      if (result.noisy_plot) document.getElementById("wave-middle").src = backendBase + result.noisy_plot;
-      if (result.filtered_plot) document.getElementById("wave-after").src = backendBase + result.filtered_plot;
+      if (result.original_plot) document.getElementById("wave-before").src = result.original_plot;
+      if (result.noisy_plot) document.getElementById("wave-middle").src = result.noisy_plot;
+      if (result.filtered_plot) document.getElementById("wave-after").src = result.filtered_plot;
 
       document.getElementById("status").innerText = "Status: Example processed.";
     } catch (e) {

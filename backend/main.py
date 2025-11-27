@@ -1,5 +1,8 @@
 import os
 import uuid
+import base64
+import tempfile
+import shutil
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal import butter, filtfilt
@@ -144,7 +147,13 @@ app.add_middleware(
 )
 
 def process_audio_file(audio_path: str):
-    """دالة مساعدة: تقرأ الملف، تضيف نويز، تفلتر، وتحفظ 3 صور وترجع أسمائهم."""
+    """Process audio and return image data URLs for original, noisy and filtered signals.
+
+    This creates a temporary directory, writes three PNGs with fixed names
+    (`original.png`, `noisy.png`, `filtered.png`), reads them, encodes as
+    data URLs, then deletes the temp directory before returning. This ensures
+    frontend can directly use returned data URLs and server does not keep files.
+    """
     if os.path.exists(audio_path):
         t, original_signal, sample_rate = load_audio_file(audio_path)
         kind = "audio"
@@ -157,32 +166,43 @@ def process_audio_file(audio_path: str):
         noisy_signal,
         sample_rate=sample_rate,
         cutoff_freq=3000,
-        filter_order=5
+        filter_order=5,
     )
 
-    rand = uuid.uuid4().hex[:8]
+    # create temp dir to hold images
+    temp_dir = tempfile.mkdtemp(prefix="proc_")
+    try:
+        out_orig = os.path.join(temp_dir, "original.png")
+        out_noisy = os.path.join(temp_dir, "noisy.png")
+        out_filt = os.path.join(temp_dir, "filtered.png")
 
-    orig_name = f"{kind}_original_{rand}.png"
-    noisy_name = f"{kind}_noisy_{rand}.png"
-    filt_name = f"{kind}_filtered_{rand}.png"
+        save_signal_plot(t, original_signal, "Original Signal", out_orig, zoom_samples=5000)
+        save_signal_plot(t, noisy_signal, "Noisy Signal", out_noisy, zoom_samples=5000)
+        save_signal_plot(t, filtered_signal, "Filtered Signal", out_filt, zoom_samples=5000)
 
-    out_orig = os.path.join(outputs_dir, orig_name)
-    out_noisy = os.path.join(outputs_dir, noisy_name)
-    out_filt = os.path.join(outputs_dir, filt_name)
+        def _encode(path):
+            with open(path, "rb") as fh:
+                data = fh.read()
+            b64 = base64.b64encode(data).decode("ascii")
+            return f"data:image/png;base64,{b64}"
 
-    save_signal_plot(t, original_signal, 'Original Signal', out_orig, zoom_samples=5000)
-    save_signal_plot(t, noisy_signal, 'Noisy Signal', out_noisy, zoom_samples=5000)
-    save_signal_plot(t, filtered_signal, 'Filtered Signal', out_filt, zoom_samples=5000)
+        orig_data = _encode(out_orig)
+        noisy_data = _encode(out_noisy)
+        filt_data = _encode(out_filt)
 
-    # نرجع paths اللي الfrontend يقدر يستخدمها
+    finally:
+        # remove temp dir and files
+        try:
+            shutil.rmtree(temp_dir)
+        except Exception as e:
+            print(f"Warning: failed to remove temp dir {temp_dir}: {e}")
 
     return {
-    
-    "kind": kind,
-    "original_plot": f"/outputs/{orig_name}",
-    "noisy_plot": f"/outputs/{noisy_name}",
-    "filtered_plot": f"/outputs/{filt_name}",
-}
+        "kind": kind,
+        "original_plot": orig_data,
+        "noisy_plot": noisy_data,
+        "filtered_plot": filt_data,
+    }
 
 # --------------- ROUTES / ENDPOINTS ------------ #
 

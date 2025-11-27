@@ -6,7 +6,7 @@ body {
   box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
 }
 .waveform-box {
-  min-height: 260px;
+  min-height: 232px;
   background: #fff;
   border: 1px solid #e9eef4;
   border-radius: 8px;

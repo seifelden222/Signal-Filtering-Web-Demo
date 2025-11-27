@@ -179,6 +179,16 @@ function setDisabled(state) {
   if (UploadAudio) UploadAudio.disabled = state;
 }
 
+// helper to update status text and apply success/error color
+function setStatus(message, state) {
+  const el = document.getElementById("status");
+  if (!el) return;
+  el.innerText = `Status: ${message}`;
+  el.classList.remove("status-ok", "status-error");
+  if (state === "ok") el.classList.add("status-ok");
+  else if (state === "error") el.classList.add("status-error");
+}
+
 ClearButton.addEventListener("click", function () {
   // reset images/placeholders
   document.getElementById("wave-before").style.display = "none";

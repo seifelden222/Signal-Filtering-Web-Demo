@@ -1,189 +1,116 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="ar" dir="rtl">
   <head>
-    <meta charset="UTF-8" />
-    <title>Voice DSP – Upload & Process</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
-      crossorigin="anonymous" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>محلل موجات DSP</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-" crossorigin="anonymous">
+    <style>
+      body { background:#f8fafc; }
+      .main-card { border-radius:12px; box-shadow:0 6px 18px rgba(15,23,42,0.06); }
+      .waveform-box { min-height:260px; background:#fff; border:1px solid #e9eef4; border-radius:8px; }
+      .placeholder { color:#98a2b3; padding:56px 12px; text-align:center; }
+      .wave-img { display:block; width:100%; height:260px; object-fit:contain; border-bottom-left-radius:8px; border-bottom-right-radius:8px; }
+      .status-ok { color:#198754; }
+      .status-error { color:#dc3545; }
+      /* center column wider on large screens */
+      @media (min-width: 1200px) {
+        .center-col { max-width: 1100px; }
+      }
+    </style>
   </head>
   <body>
-    <h2 class="text-center">Voice DSP – Before / Middle / After</h2>
 
-    <div class="container">
-      <div class="row">
-        <div class="col-md-10">
-          <h2 id="upload_audio_err" class="alert alert-danger d-none">
-            please inter a voice with .wav
-          </h2>
-          <form action="" onsubmit="processTest(event);" id="upload-form">
-            <label class="text-center">upload-audio: </label>
-            <input
-              type="file"
-              id="upload-audio"
-              accept="audio/*"
-              class="form-control my-4" />
-            <input type="submit" class="form-control btn btn-info" />
-          </form>
-          <div class="d-flex justify-content-center">
-            <p class="text-center me-4">
-              if you donot know the resulut click her and will give you example
-            </p>
-            <button id="example-button" class="btn btn-primary mb-4">
-              Examble
-            </button>
-          </div>
-          <div id="status" class="text-center fw-normal">Status: idle</div>
+    <!-- Navbar -->
+    <nav class="navbar navbar-dark bg-dark">
+      <div class="container-fluid justify-content-center">
+        <span class="navbar-brand mb-0 h1">DSP Waveforms &nbsp; | &nbsp; محلل الموجات الصوتية</span>
+      </div>
+    </nav>
 
-          <div class="d-block text-center my-4">
-            <div class="label">Before (original waveform)</div>
-            <img
-          
-              id="wave-before"
-              width="800"
-              height="100"
-              class="img-fluid"></img>
-          </div>
+    <main class="py-5">
+      <div class="container center-col">
+        <div class="card main-card p-4">
+          <div class="card-body">
+            <h2 class="card-title text-center mb-2">تحليل الموجات الصوتية</h2>
+            <p class="text-center text-muted mb-4">حمل مقطعًا صوتيًا قصيرًا لعرض الموجة الأصلية، المشوشة، والمفلترة.</p>
 
-          <div class="d-block text-center my-4">
-            <div class="label">Middle (quantized waveform)</div>
-            <img
-              id="wave-middle"
-              width="800"
-              height="100"
-              class="img-fluid"></img>
-          </div>
+            <!-- Upload form -->
+            <div class="row justify-content-center mb-3">
+              <div class="col-12">
+                <div id="upload_audio_err" class="alert alert-danger d-none" role="alert">الرجاء إدخال ملف صوتي (wav/ogg/mp3/...)</div>
+                <form id="upload-form" onsubmit="processTest(event);">
+                  <div class="mb-3">
+                    <label for="upload-audio" class="form-label fw-semibold">تحميل مقطع صوتي</label>
+                    <input class="form-control" type="file" id="upload-audio" accept="audio/*">
+                  </div>
 
-          <div class="d-block text-center my-4">
-            <div class="label">After (filtered waveform)</div>
-            <img
-              id="wave-after"
-              width="800"
-              height="100"
-              class="img-fluid"></img>
+                  <div class="d-flex gap-2 mb-3">
+                    <button id="submit-button" type="submit" class="btn btn-primary flex-grow-1">تحميل وبدء المعالجة</button>
+                    <button id="clear-button" type="button" class="btn btn-outline-secondary">مسح النتائج</button>
+                  </div>
+                </form>
+
+                <div class="d-flex align-items-center gap-3 mt-2">
+                  <button id="example-button" class="btn btn-dark">تشغيل المثال</button>
+                  <div id="status" class="text-muted small">الحالة: الخمول</div>
+                  <div id="spinner" class="spinner-border text-primary ms-3" role="status" style="display:none; width:1rem; height:1rem; border-width:.12rem;"></div>
+                </div>
+              </div>
+            </div>
+
+            <hr>
+
+            <!-- Waveform sections -->
+            <div class="row gy-4">
+              <div class="col-12">
+                <h5 class="mb-2">1. قبل (الموجة الأصلية)</h5>
+                <div class="waveform-box p-3">
+                  <div id="ph-before" class="placeholder">لا توجد صورة بعد</div>
+                  <img id="wave-before" class="wave-img" alt="Before waveform" style="display:none;">
+                  <div class="d-flex justify-content-between align-items-center mt-2">
+                    <small id="cap-before" class="text-muted">&nbsp;</small>
+                    <a id="dl-before" class="btn btn-sm btn-outline-primary" style="display:none" download="original.png">تحميل</a>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <h5 class="mb-2">2. في المنتصف (الموجة المشوشة)</h5>
+                <div class="waveform-box p-3">
+                  <div id="ph-middle" class="placeholder">لا توجد صورة بعد</div>
+                  <img id="wave-middle" class="wave-img" alt="Middle waveform" style="display:none;">
+                  <div class="d-flex justify-content-between align-items-center mt-2">
+                    <small id="cap-middle" class="text-muted">&nbsp;</small>
+                    <a id="dl-middle" class="btn btn-sm btn-outline-primary" style="display:none" download="noisy.png">تحميل</a>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <h5 class="mb-2">3. بعد (الموجة المفلترة)</h5>
+                <div class="waveform-box p-3">
+                  <div id="ph-after" class="placeholder">لا توجد صورة بعد</div>
+                  <img id="wave-after" class="wave-img" alt="After waveform" style="display:none;">
+                  <div class="d-flex justify-content-between align-items-center mt-2">
+                    <small id="cap-after" class="text-muted">&nbsp;</small>
+                    <a id="dl-after" class="btn btn-sm btn-outline-primary" style="display:none" download="filtered.png">تحميل</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
-    </div>
+    </main>
 
-<script>
-  // backend base URL (خلي البورت نفس اللي مشغّل عليه uvicorn)
-  const backendBase = "http://127.0.0.1:8001";
+    <footer class="text-center py-4 text-muted small">&copy; 2025 Voice DSP Analyzer</footer>
 
-  var UploadAudio = document.getElementById("upload-audio");
-  var UploadForm = document.getElementById("upload-form");
-  var UploadAudioErr = document.getElementById("upload_audio_err");
-
-  async function processTest(e) {
-    e.preventDefault();
-
-    if (!UploadAudio.files || UploadAudio.files.length === 0) {
-      UploadAudioErr.classList.remove("d-none");
-      return false;
-    }
-
-    const allowedExt = ["wav", "ogg", "mp3", "flac", "m4a", "aac", "opus"];
-    const ext = UploadAudio.files[0].name.split(".").pop().toLowerCase();
-    if (!allowedExt.includes(ext)) {
-      UploadAudioErr.innerHTML =
-        "please upload an audio file (wav/ogg/mp3/...)";
-      UploadAudioErr.classList.remove("d-none");
-      return false;
-    }
-
-    try {
-      UploadAudioErr.classList.add("d-none");
-      document.getElementById("status").innerText =
-        "Status: uploading & processing...";
-
-      const formData = new FormData();
-      formData.append("file", UploadAudio.files[0]); // اسم الحقل في الـ backend = file
-
-      const res = await fetch(backendBase + "/process-audio/", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!res.ok) {
-        let txt = await res.text().catch(() => "");
-        console.error("Server error", res.status, txt);
-        document.getElementById(
-          "status"
-        ).innerText = `Status: Server error ${res.status}`;
-        return;
-      }
-
-      const result = await res.json();
-      console.log(result);
-
-      document.getElementById("status").innerText =
-        "Status: File processed.";
-
-      // نرسم الصور في العناصر <img> — نستخدم رابط كامل (backendBase + path)
-      if (result.original_plot) {
-        const url = backendBase + result.original_plot;
-        drawImageToCanvas(url, "wave-before");
-      } else {
-        console.warn('original_plot missing in response', result);
-      }
-      if (result.noisy_plot) {
-        const url = backendBase + result.noisy_plot;
-        drawImageToCanvas(url, "wave-middle");
-      }
-      if (result.filtered_plot) {
-        const url = backendBase + result.filtered_plot;
-        drawImageToCanvas(url, "wave-after");
-      }
-    } catch (error) {
-      console.error("Error uploading file:", error);
-      document.getElementById("status").innerText =
-        "Status: Error uploading file.";
-    }
-  }
-
-  // زرار الـ Example يستدعي /process-default
-  document.getElementById("example-button").addEventListener("click", async function () {
-    try {
-      document.getElementById("status").innerText =
-        "Status: processing default example...";
-      const res = await fetch(backendBase + "/process-default");
-      if (!res.ok) {
-        document.getElementById("status").innerText = `Status: Example failed ${res.status}`;
-        return;
-      }
-      const result = await res.json();
-
-      // backend returns keys: original_plot, noisy_plot, filtered_plot
-      if (result.original_plot) document.getElementById("wave-before").src = backendBase + result.original_plot;
-      if (result.noisy_plot) document.getElementById("wave-middle").src = backendBase + result.noisy_plot;
-      if (result.filtered_plot) document.getElementById("wave-after").src = backendBase + result.filtered_plot;
-
-      document.getElementById("status").innerText = "Status: Example processed.";
-    } catch (e) {
-      console.error(e);
-      document.getElementById("status").innerText = "Status: error in example.";
-    }
-  });
-
-function images(){
-
-}
-
-
-
-
-
-  // helper: set image src from full URL
-  function drawImageToCanvas(url, imgId) {
-    if (!url) return;
-    const el = document.getElementById(imgId);
-    if (!el) return;
-    // set src to full http(s) url
-    el.src = url;
-  }
-</script>
-
+    <!-- Bootstrap JS bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="" crossorigin="anonymous"></script>
+    <!-- App script (must exist) -->
+    <script src="include/assets/js/main.js"></script>
   </body>
 </html>

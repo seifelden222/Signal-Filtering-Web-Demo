@@ -1,31 +1,20 @@
 <!doctype html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>محلل موجات DSP</title>
+    <title>DSP Waveform Analyzer</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-" crossorigin="anonymous">
-    <style>
-      body { background:#f8fafc; }
-      .main-card { border-radius:12px; box-shadow:0 6px 18px rgba(15,23,42,0.06); }
-      .waveform-box { min-height:260px; background:#fff; border:1px solid #e9eef4; border-radius:8px; }
-      .placeholder { color:#98a2b3; padding:56px 12px; text-align:center; }
-      .wave-img { display:block; width:100%; height:260px; object-fit:contain; border-bottom-left-radius:8px; border-bottom-right-radius:8px; }
-      .status-ok { color:#198754; }
-      .status-error { color:#dc3545; }
-      /* center column wider on large screens */
-      @media (min-width: 1200px) {
-        .center-col { max-width: 1100px; }
-      }
-    </style>
+
+    <link rel="stylesheet" href="include/assets/css/style.css">
   </head>
   <body>
 
     <!-- Navbar -->
     <nav class="navbar navbar-dark bg-dark">
       <div class="container-fluid justify-content-center">
-        <span class="navbar-brand mb-0 h1">DSP Waveforms &nbsp; | &nbsp; محلل الموجات الصوتية</span>
+        <span class="navbar-brand mb-0 h1">DSP Waveforms &nbsp; | &nbsp; Audio Wave Analyzer</span>
       </div>
     </nav>
 
@@ -33,28 +22,28 @@
       <div class="container center-col">
         <div class="card main-card p-4">
           <div class="card-body">
-            <h2 class="card-title text-center mb-2">تحليل الموجات الصوتية</h2>
-            <p class="text-center text-muted mb-4">حمل مقطعًا صوتيًا قصيرًا لعرض الموجة الأصلية، المشوشة، والمفلترة.</p>
+            <h2 class="card-title text-center mb-2">Audio Waveform Analysis</h2>
+            <p class="text-center text-muted mb-4">Upload a short audio clip to view the original, noisy, and filtered waveforms.</p>
 
             <!-- Upload form -->
             <div class="row justify-content-center mb-3">
               <div class="col-12">
-                <div id="upload_audio_err" class="alert alert-danger d-none" role="alert">الرجاء إدخال ملف صوتي (wav/ogg/mp3/...)</div>
+                <div id="upload_audio_err" class="alert alert-danger d-none" role="alert">Please provide an audio file (wav/ogg/mp3/...)</div>
                 <form id="upload-form" onsubmit="processTest(event);">
                   <div class="mb-3">
-                    <label for="upload-audio" class="form-label fw-semibold">تحميل مقطع صوتي</label>
+                    <label for="upload-audio" class="form-label fw-semibold">Upload audio clip</label>
                     <input class="form-control" type="file" id="upload-audio" accept="audio/*">
                   </div>
 
                   <div class="d-flex gap-2 mb-3">
-                    <button id="submit-button" type="submit" class="btn btn-primary flex-grow-1">تحميل وبدء المعالجة</button>
-                    <button id="clear-button" type="button" class="btn btn-outline-secondary">مسح النتائج</button>
+                    <button id="submit-button" type="submit" class="btn btn-primary flex-grow-1">Upload & Start Processing</button>
+                    <button id="clear-button" type="button" class="btn btn-outline-secondary">Clear Results</button>
                   </div>
                 </form>
 
                 <div class="d-flex align-items-center gap-3 mt-2">
-                  <button id="example-button" class="btn btn-dark">تشغيل المثال</button>
-                  <div id="status" class="text-muted small">الحالة: الخمول</div>
+                  <button id="example-button" class="btn btn-dark">Run Example</button>
+                  <div id="status" class="text-muted small">Status: Idle</div>
                   <div id="spinner" class="spinner-border text-primary ms-3" role="status" style="display:none; width:1rem; height:1rem; border-width:.12rem;"></div>
                 </div>
               </div>
@@ -65,37 +54,37 @@
             <!-- Waveform sections -->
             <div class="row gy-4">
               <div class="col-12">
-                <h5 class="mb-2">1. قبل (الموجة الأصلية)</h5>
+                <h5 class="mb-2">1. Before (Original waveform)</h5>
                 <div class="waveform-box p-3">
-                  <div id="ph-before" class="placeholder">لا توجد صورة بعد</div>
+                  <div id="ph-before" class="placeholder"></div>
                   <img id="wave-before" class="wave-img" alt="Before waveform" style="display:none;">
                   <div class="d-flex justify-content-between align-items-center mt-2">
                     <small id="cap-before" class="text-muted">&nbsp;</small>
-                    <a id="dl-before" class="btn btn-sm btn-outline-primary" style="display:none" download="original.png">تحميل</a>
+                    <a id="dl-before" class="btn btn-sm btn-outline-primary" style="display:none" download="original.png">Download</a>
                   </div>
                 </div>
               </div>
 
               <div class="col-12">
-                <h5 class="mb-2">2. في المنتصف (الموجة المشوشة)</h5>
+                <h5 class="mb-2">2. Middle (Noisy waveform)</h5>
                 <div class="waveform-box p-3">
-                  <div id="ph-middle" class="placeholder">لا توجد صورة بعد</div>
+                  <div id="ph-middle" class="placeholder"></div>
                   <img id="wave-middle" class="wave-img" alt="Middle waveform" style="display:none;">
                   <div class="d-flex justify-content-between align-items-center mt-2">
                     <small id="cap-middle" class="text-muted">&nbsp;</small>
-                    <a id="dl-middle" class="btn btn-sm btn-outline-primary" style="display:none" download="noisy.png">تحميل</a>
+                    <a id="dl-middle" class="btn btn-sm btn-outline-primary" style="display:none" download="noisy.png">Download</a>
                   </div>
                 </div>
               </div>
 
               <div class="col-12">
-                <h5 class="mb-2">3. بعد (الموجة المفلترة)</h5>
+                <h5 class="mb-2">3. After (Filtered waveform)</h5>
                 <div class="waveform-box p-3">
-                  <div id="ph-after" class="placeholder">لا توجد صورة بعد</div>
+                  <div id="ph-after" class="placeholder"></div>
                   <img id="wave-after" class="wave-img" alt="After waveform" style="display:none;">
                   <div class="d-flex justify-content-between align-items-center mt-2">
                     <small id="cap-after" class="text-muted">&nbsp;</small>
-                    <a id="dl-after" class="btn btn-sm btn-outline-primary" style="display:none" download="filtered.png">تحميل</a>
+                    <a id="dl-after" class="btn btn-sm btn-outline-primary" style="display:none" download="filtered.png">Download</a>
                   </div>
                 </div>
               </div>
@@ -106,7 +95,10 @@
       </div>
     </main>
 
-    <footer class="text-center py-4 text-muted small">&copy; 2025 Voice DSP Analyzer</footer>
+    <footer class="text-center py-4 text-white small site-footer">
+      &copy; 2025 Voice DSP Analyzer
+      <div class="mt-2 small">Made by <strong>SeifElden Hamdy</strong> &nbsp;|&nbsp; <a href="tel:01032484794" class="text-white">01032484794</a> &nbsp;|&nbsp; <a href="mailto:seifeldenhamdy@gmail.com" class="text-white">seifeldenhamdy@gmail.com</a></div>
+    </footer>
 
     <!-- Bootstrap JS bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="" crossorigin="anonymous"></script>

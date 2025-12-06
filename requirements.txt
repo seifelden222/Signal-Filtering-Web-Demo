@@ -6,3 +6,8 @@ matplotlib
 soundfile
 python-multipart
 jinja2
+os
+uuid
+base64
+tempfile
+shutil

@@ -53,7 +53,17 @@ def simple_signal_processing(sample_rate=44100, duration=1.0):
 def add_noise(original_signal, noise_amplitude=0.3):
     """
     Add random noise to the signal
+    
+    Parameters:
+    - original_signal: input signal array
+    - noise_amplitude: standard deviation of Gaussian noise
+    
+    Returns:
+    - noisy_signal: signal with added noise
     """
+    if noise_amplitude < 0:
+        raise ValueError(f"Noise amplitude must be non-negative, got {noise_amplitude}")
+    
     noise = noise_amplitude * np.random.normal(size=original_signal.shape)
     noisy_signal = original_signal + noise
     return noisy_signal
@@ -62,11 +72,32 @@ def add_noise(original_signal, noise_amplitude=0.3):
 def lowpass_filter(signal, sample_rate=44100, cutoff_freq=1000, filter_order=5):
     """
     Apply a Butterworth low-pass filter to the signal
+    
+    Parameters:
+    - signal: input signal array
+    - sample_rate: sampling rate in Hz
+    - cutoff_freq: cutoff frequency in Hz (must be less than Nyquist frequency)
+    - filter_order: filter order (higher = steeper roll-off)
+    
+    Returns:
+    - filtered_signal: the filtered signal
     """
     nyquist = 0.5 * sample_rate
+    
+    # Validate cutoff frequency
+    if cutoff_freq <= 0:
+        raise ValueError(f"Cutoff frequency must be positive, got {cutoff_freq} Hz")
+    if cutoff_freq >= nyquist:
+        raise ValueError(f"Cutoff frequency {cutoff_freq} Hz must be less than Nyquist frequency {nyquist} Hz")
+    
     normal_cutoff = cutoff_freq / nyquist
+    
+    # Design Butterworth filter
     b, a = butter(filter_order, normal_cutoff, btype='low', analog=False)
+    
+    # Apply zero-phase filtering (forward and backward)
     filtered_signal = filtfilt(b, a, signal)
+    
     return filtered_signal
 
 

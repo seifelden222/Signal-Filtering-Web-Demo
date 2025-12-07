@@ -17,23 +17,23 @@ from fastapi.responses import JSONResponse
 
 def load_audio_file(file_path):
     """
-    تقرأ ملف صوت من المسار المحدد وترجع:
+    Read an audio file from the specified path and return:
     - t: time axis
     - signal: mono audio signal
     - sample_rate: sampling rate
     """
     data, sample_rate = sf.read(file_path)
 
-    # لو الملف ستيريو (قناتين)، نخليه مونو بأخذ المتوسط
+    # If the file is stereo (two channels), convert to mono by averaging
     if data.ndim > 1:
         data = data.mean(axis=1)
 
-    # Normalize (اختياري)
+    # Normalize (optional)
     max_val = np.max(np.abs(data))
     if max_val > 0:
         data = data / max_val
 
-    # محور الزمن
+    # Time axis
     duration = len(data) / sample_rate
     t = np.linspace(0, duration, num=len(data), endpoint=False)
 
@@ -42,7 +42,7 @@ def load_audio_file(file_path):
 
 def simple_signal_processing(sample_rate=44100, duration=1.0):
     """
-    توليد موجة سين بسيطة (لو حبيت تجرب بدون ملف صوت)
+    Generate a simple sine wave (if you want to test without an audio file)
     """
     t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
     freq = 440  # Hz
@@ -52,7 +52,7 @@ def simple_signal_processing(sample_rate=44100, duration=1.0):
 
 def add_noise(original_signal, noise_amplitude=0.3):
     """
-    إضافة noise عشوائي للإشارة
+    Add random noise to the signal
     """
     noise = noise_amplitude * np.random.normal(size=original_signal.shape)
     noisy_signal = original_signal + noise
@@ -61,7 +61,7 @@ def add_noise(original_signal, noise_amplitude=0.3):
 
 def lowpass_filter(signal, sample_rate=44100, cutoff_freq=1000, filter_order=5):
     """
-    تطبيق فلتر Low-pass Butterworth على الإشارة
+    Apply a Butterworth low-pass filter to the signal
     """
     nyquist = 0.5 * sample_rate
     normal_cutoff = cutoff_freq / nyquist
@@ -72,8 +72,8 @@ def lowpass_filter(signal, sample_rate=44100, cutoff_freq=1000, filter_order=5):
 
 def draw_signals(t, original_signal, noisy_signal, filtered_signal, zoom_samples=5000):
     """
-    رسم الإشارات: الأصلية، noisy، والمفلترة
-    zoom_samples: عدد النقاط اللي هنظهرها في الرسم
+    Plot the signals: original, noisy, and filtered
+    zoom_samples: number of points to display in the plot
     """
     n = min(zoom_samples, len(t))
 

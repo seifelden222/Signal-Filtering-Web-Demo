@@ -1,4 +1,4 @@
-// backend base URL (خلي البورت نفس اللي مشغّل عليه uvicorn)
+// backend base URL (keep the port same as the one running uvicorn)
 const backendBase = "http://127.0.0.1:8001";
 
 var UploadAudio = document.getElementById("upload-audio");
@@ -34,7 +34,7 @@ async function processTest(e) {
       "Status: uploading & processing...";
 
     const formData = new FormData();
-    formData.append("file", UploadAudio.files[0]); // اسم الحقل في الـ backend = file
+    formData.append("file", UploadAudio.files[0]); // field name in the backend = file
 
     const res = await fetch(backendBase + "/process-audio/", {
       method: "POST",
@@ -98,7 +98,7 @@ async function processTest(e) {
   }
 }
 
-// زرار الـ Example يستدعي /process-default
+// Example button calls /process-default
 ExampleButton.addEventListener("click", async function () {
   try {
     setDisabled(true);

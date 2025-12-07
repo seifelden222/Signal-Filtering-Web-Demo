@@ -108,11 +108,3 @@ README.md        # <-- this file
 Made by SeifElden Hamdy — seifeldenhamdy@gmail.com — 01032484794
 
 ---
-
-If you'd like, I can also:
-
-- Add an example `docker-compose` for easy local development.
-- Improve the frontend UI or translate it back to Arabic.
-- Save generated PNGs to disk for debugging.
-
-Tell me which of those you'd like next.
